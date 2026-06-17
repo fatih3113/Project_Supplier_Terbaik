@@ -1,0 +1,44 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  name     String
+  username    String @unique
+  password String
+  role     String @default("Staff") // Admin / Staff Purchasing
+}
+
+model Supplier {
+  id_supplier   Int          @id @default(autoincrement())
+  nama_supplier String
+  alamat        String       @db.Text
+  telepon       String
+  email         String
+  assessments   Assessment[]
+}
+
+model Criteria {
+  id            Int          @id @default(autoincrement())
+  nama_kriteria String
+  bobot         Float
+  jenis         String       // benefit / cost
+  assessments   Assessment[]
+}
+
+model Assessment {
+  id         Int      @id @default(autoincrement())
+  supplierId Int
+  criteriaId Int
+  nilai      Float
+  supplier   Supplier @relation(fields: [supplierId], references: [id_supplier], onDelete: Cascade)
+  criteria   Criteria @relation(fields: [criteriaId], references: [id], onDelete: Cascade)
+
+  @@unique([supplierId, criteriaId])
+}
