@@ -7,13 +7,51 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// ─── RBAC ───────────────────────────────────────────
+
+model Role {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique  // 'Super Admin', 'Admin', 'Manajer'
+  description String?
+  users       User[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique  // 'user.create', 'kriteria.delete', dll
+  description String?
+  roles       RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       Int
+  permissionId Int
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// ─── USER (diubah: hapus role String, tambah roleId FK) ─────────────────────
+
 model User {
   id       Int    @id @default(autoincrement())
   name     String
   username String @unique
   password String
-  role     String @default("Staff") // Admin / Staff Purchasing
+  roleId   Int
+  role     Role   @relation(fields: [roleId], references: [id])
+
+  @@map("users")
 }
+
+// ─── EXISTING MODELS (tidak ada perubahan) ──────────────────────────────────
 
 model Supplier {
   id_supplier   Int          @id @default(autoincrement())
@@ -22,6 +60,8 @@ model Supplier {
   telepon       String
   email         String
   assessments   Assessment[]
+
+  @@map("suppliers")
 }
 
 model Criteria {
@@ -30,6 +70,8 @@ model Criteria {
   bobot         Float
   jenis         String       // benefit / cost
   assessments   Assessment[]
+
+  @@map("criteria")
 }
 
 model Assessment {
@@ -37,12 +79,11 @@ model Assessment {
   supplierId Int
   criteriaId Int
   nilai      Float
-  
-  // Perbaikan di sini: Menambahkan kolom tanggal pembuatan otomatis
   createdAt  DateTime @default(now())
-  
+
   supplier   Supplier @relation(fields: [supplierId], references: [id_supplier], onDelete: Cascade)
   criteria   Criteria @relation(fields: [criteriaId], references: [id], onDelete: Cascade)
 
   @@unique([supplierId, criteriaId])
+  @@map("assessments")
 }

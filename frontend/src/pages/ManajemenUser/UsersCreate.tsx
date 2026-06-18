@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../../lib/axios';
 import { toast } from 'react-hot-toast';
 import { X } from 'lucide-react';
@@ -8,11 +8,36 @@ interface Props {
   onCancel: () => void;
 }
 
+interface RoleOption {
+  id: number;
+  name: string;
+}
+
 const UserCreate: React.FC<Props> = ({ onSuccess, onCancel }) => {
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('Admin');
+  const [roleId, setRoleId] = useState<number | string>('');
+  const [roles, setRoles] = useState<RoleOption[]>([]);
+  const [loadingRoles, setLoadingRoles] = useState(true);
+
+  // Ambil list master role dari database MySQL
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const res = await api.get('/roles');
+        setRoles(res.data);
+        if (res.data.length > 0) {
+          setRoleId(res.data[0].id); // Default ke role pertama
+        }
+      } catch (err) {
+        toast.error('Gagal memuat tingkatan hak akses');
+      } finally {
+        setLoadingRoles(false);
+      }
+    };
+    fetchRoles();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,8 +45,14 @@ const UserCreate: React.FC<Props> = ({ onSuccess, onCancel }) => {
       toast.error('Password baru minimal harus 8 karakter!');
       return;
     }
+    if (!roleId) {
+      toast.error('Role belum siap atau belum dipilih!');
+      return;
+    }
+
     try {
-      await api.post('/users', { name, username, password, role });
+      // Kirim data menggunakan roleId (angka) sesuai relasi tabel database baru
+      await api.post('/users', { name, username, password, roleId: Number(roleId) });
       toast.success('User baru berhasil ditambahkan!');
       onSuccess();
     } catch (err: any) {
@@ -77,13 +108,19 @@ const UserCreate: React.FC<Props> = ({ onSuccess, onCancel }) => {
           <div>
             <label htmlFor="roleSelect" className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">Hak Akses / Role</label>
             <select
-              id="roleSelect" value={role}
-              onChange={(e) => setRole(e.target.value)}
+              id="roleSelect" 
+              value={roleId}
+              disabled={loadingRoles}
+              onChange={(e) => setRoleId(e.target.value)}
               className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-slate-50 focus:bg-white transition-all"
             >
-              <option value="Admin">Admin</option>
-              <option value="Super Admin">Super Admin</option>
-              <option value="Manajer">Manajer</option>
+              {loadingRoles ? (
+                <option>Memuat pilihan role...</option>
+              ) : (
+                roles.map((r) => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))
+              )}
             </select>
           </div>
 

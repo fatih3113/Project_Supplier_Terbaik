@@ -12,7 +12,7 @@ export const register = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Data tidak lengkap' });
     }
 
-    // 2. Validasi minimal panjang password (8 Karakter) di Backend
+    // 2. Validasi minimal panjang password (8 Karakter)
     if (password.trim().length < 8) {
       return res.status(400).json({ message: 'Password harus minimal 8 karakter!' });
     }
@@ -26,9 +26,20 @@ export const register = async (req: Request, res: Response) => {
     const existingUser = await prisma.user.findUnique({ where: { username } });
     if (existingUser) return res.status(400).json({ message: 'Username sudah digunakan' });
 
+    // Cari ID Role 'Admin' secara dinamis dari database untuk user baru
+    const defaultRole = await prisma.role.findUnique({ where: { name: 'Admin' } });
+    if (!defaultRole) {
+      return res.status(500).json({ message: 'Role default Admin belum diseed di database!' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
-      data: { name, username, password: hashedPassword, role: 'Admin' }
+      data: { 
+        name, 
+        username, 
+        password: hashedPassword, 
+        roleId: defaultRole.id // Menggunakan Foreign Key roleId baru sesuai schema
+      }
     });
 
     res.status(201).json({ message: 'Registrasi berhasil', userId: user.id });
@@ -42,21 +53,50 @@ export const login = async (req: Request, res: Response) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ message: 'Username dan password wajib diisi' });
 
-    const user = await prisma.user.findUnique({ where: { username } });
+    // Cari user lengkap dengan role dan daftar permission yang terhubung lewat tabel RolePermission
+    const user = await prisma.user.findUnique({ 
+      where: { username },
+      include: {
+        role: {
+          include: {
+            permissions: {
+              include: {
+                permission: true
+              }
+            }
+          }
+        }
+      }
+    });
     
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(400).json({ message: 'Username atau password salah' });
     }
 
+    // Ekstrak nama-nama permission menjadi array string, contoh: ['user.create', 'kriteria.view']
+    const permissionsArray = user.role.permissions.map(rp => rp.permission.name);
+
+    // Masukkan token payload menyertakan role name dan hak akses permissions
     const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role },
+      { 
+        id: user.id, 
+        username: user.username, 
+        role: user.role.name,
+        permissions: permissionsArray
+      },
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '1d' }
     );
 
     res.json({ 
       token, 
-      user: { id: user.id, name: user.name, username: user.username, role: user.role } 
+      user: { 
+        id: user.id, 
+        name: user.name, 
+        username: user.username, 
+        role: user.role.name 
+      },
+      permissions: permissionsArray // Kirim ke frontend agar disimpan ke Zustand
     });
   } catch (error: any) {
     res.status(500).json({ message: error.message });

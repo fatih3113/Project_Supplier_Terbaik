@@ -6,12 +6,13 @@ import { toast } from 'react-hot-toast';
 
 const Register: React.FC = () => {
   const [name, setName] = useState('');
-  const [username, setUsername] = useState(''); // Berfungsi sebagai NIM/Username
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState('Admin');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -21,11 +22,9 @@ const Register: React.FC = () => {
     e.preventDefault();
     setError('');
 
-    // Membersihkan spasi di awal/akhir secara otomatis agar pengecekan akurat
     const cleanPassword = password.trim();
     const cleanConfirmPassword = confirmPassword.trim();
 
-    // ─── VALIDASI 1: Cek minimal panjang password ───
     if (cleanPassword.length < 8) {
       const msg = 'Password harus minimal 8 karakter!';
       setError(msg);
@@ -33,7 +32,6 @@ const Register: React.FC = () => {
       return;
     }
 
-    // ─── VALIDASI 2: Cek apakah password dan konfirmasinya sudah cocok ───
     if (cleanPassword !== cleanConfirmPassword) {
       const msg = 'Konfirmasi password tidak cocok!';
       setError(msg);
@@ -43,21 +41,19 @@ const Register: React.FC = () => {
 
     setLoading(true);
     try {
-      // Mengirimkan data registrasi ke backend menggunakan key 'passwordConfirm'
       await api.post('/auth/register', {
         name,
         username,
         password: cleanPassword,
-        passwordConfirm: cleanConfirmPassword, 
+        passwordConfirm: cleanConfirmPassword,
+        role,
       });
 
-      // Notifikasi sukses registrasi melayang
       toast.success('Registrasi berhasil! Silakan masuk.', {
         duration: 4000,
         icon: '🎉',
       });
 
-      // Pindah ke halaman login
       navigate('/login');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registrasi gagal, silakan coba lagi.');
@@ -76,7 +72,7 @@ const Register: React.FC = () => {
         <p className="text-slate-500 text-sm">Isi data di bawah untuk mendaftar sebagai administrator sistem.</p>
       </div>
 
-      {/* Alert Error Box */}
+      {/* Alert Error */}
       {error && (
         <div className="mb-4 flex items-start space-x-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs p-3.5 rounded-xl">
           <span className="text-rose-500 mt-0.5">⚠</span>
@@ -84,9 +80,10 @@ const Register: React.FC = () => {
         </div>
       )}
 
-      {/* Form Utama */}
+      {/* Form */}
       <form onSubmit={handleRegister} className="space-y-4">
-        {/* Input Nama */}
+
+        {/* Nama Lengkap */}
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">
             Nama Lengkap
@@ -101,7 +98,7 @@ const Register: React.FC = () => {
           />
         </div>
 
-        {/* Input Username / NIM */}
+        {/* Username / NIM */}
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">
             Username / NIM
@@ -116,7 +113,27 @@ const Register: React.FC = () => {
           />
         </div>
 
-        {/* Input Password Utama */}
+        {/* Role */}
+        <div>
+          <label htmlFor="role" className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">
+            Hak Akses / Role
+          </label>
+          <select
+            id="role"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
+          >
+            <option value="Admin">Admin</option>
+            <option value="Super Admin">Super Admin</option>
+            <option value="Manajer">Manajer</option>
+          </select>
+          <p className="mt-1 text-[11px] text-slate-400">
+            Role menentukan hak akses yang dimiliki pengguna dalam sistem.
+          </p>
+        </div>
+
+        {/* Password */}
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">
             Password (Min. 8 Karakter)
@@ -140,7 +157,7 @@ const Register: React.FC = () => {
           </div>
         </div>
 
-        {/* Input Konfirmasi Password */}
+        {/* Konfirmasi Password */}
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">
             Konfirmasi Password
@@ -164,7 +181,7 @@ const Register: React.FC = () => {
           </div>
         </div>
 
-        {/* Tombol Submit */}
+        {/* Submit */}
         <button
           type="submit"
           disabled={loading}
@@ -184,21 +201,21 @@ const Register: React.FC = () => {
         </button>
       </form>
 
-      {/* Pembatas Pilihan */}
+      {/* Divider */}
       <div className="flex items-center my-5">
         <div className="flex-1 h-px bg-slate-200" />
         <span className="px-3 text-[11px] text-slate-400 font-medium">Sudah punya akun?</span>
         <div className="flex-1 h-px bg-slate-200" />
       </div>
 
-      {/* Navigasi Ke Login */}
+      {/* Link Login */}
       <p className="text-center text-sm text-slate-500">
         <Link to="/login" className="font-bold text-indigo-600 hover:text-indigo-800 transition-colors">
           Masuk sekarang
         </Link>
       </p>
 
-      {/* Tombol Balik Beranda */}
+      {/* Kembali Beranda */}
       <div className="mt-6 text-center">
         <button
           onClick={() => navigate('/')}

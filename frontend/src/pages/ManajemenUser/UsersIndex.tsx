@@ -2,14 +2,17 @@ import React, { useState, useEffect } from 'react';
 import api from '../../lib/axios';
 import { toast } from 'react-hot-toast';
 import { UserPlus, Edit2, Trash2, Shield, RefreshCw } from 'lucide-react';
-import UsersCreate  from './UsersCreate';
+import UsersCreate from './UsersCreate';
 import UsersEdit from './UsersEdit';
 
 export interface User {
   id: number;
   name: string;
   username: string;
-  role: string;
+  roleId: number;       // Tambahkan ID relasi untuk melempar state ke komponen Edit
+  role: {
+    name: string;      // Relasi object bungkusan baru dari database
+  };
 }
 
 const UserIndex: React.FC = () => {
@@ -111,7 +114,8 @@ const UserIndex: React.FC = () => {
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
                         <Shield size={12} />
-                        <span>{user.role}</span>
+                        {/* Membaca string name dari object relasi database */}
+                        <span>{user.role?.name || 'No Role'}</span>
                       </span>
                     </td>
                     <td className="px-6 py-4">

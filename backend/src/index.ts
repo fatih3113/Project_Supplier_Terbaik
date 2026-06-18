@@ -9,6 +9,7 @@ import criteriaRoutes from './routes/criteriaRoutes';
 import assessmentRoutes from './routes/assessmentRoutes';
 import rankingRoutes from './routes/rankingRoutes';
 import userRoutes from './routes/userRoutes';
+import roleRoutes from './routes/roleRoutes';
 
 dotenv.config();
 
@@ -24,6 +25,8 @@ app.use('/api/criteria', criteriaRoutes);     // Contoh: /api/criteria
 app.use('/api/assessment', assessmentRoutes); // Contoh: /api/assessment
 app.use('/api/users', userRoutes);           // Contoh: /api/users
 app.use('/api/ranking', rankingRoutes);       // Contoh: /api/ranking
+app.use('/api/roles', roleRoutes);           // Contoh: /api/roles
+
 
 const PORT = process.env.PORT || 3000;
 

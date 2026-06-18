@@ -1,13 +1,16 @@
 import { Router } from 'express';
-import { getAllUsers, createUser, updateUser, deleteUser } from '../Controllers/userController';
+import { getUsers, createUser, updateUser, deleteUser } from '../Controllers/userController';
 import { authenticateToken } from '../middleware/authMiddleware';
+import { checkPermission } from '../middleware/checkPermission';
 
 const router = Router();
 
-// Jalur di sini diubah menjadi '/' agar saat digabung menjadi '/api/users'
-router.get('/', authenticateToken, getAllUsers);
-router.post('/', authenticateToken, createUser);
-router.put('/:id', authenticateToken, updateUser);
-router.delete('/:id', authenticateToken, deleteUser);
+// Proteksi token untuk semua rute user
+router.use(authenticateToken);
+
+router.get('/', checkPermission('user.view'), getUsers);
+router.post('/', checkPermission('user.create'), createUser);
+router.put('/:id', checkPermission('user.edit'), updateUser);
+router.delete('/:id', checkPermission('user.delete'), deleteUser);
 
 export default router;

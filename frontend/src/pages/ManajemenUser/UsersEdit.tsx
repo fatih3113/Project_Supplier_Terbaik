@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../../lib/axios';
 import { toast } from 'react-hot-toast';
 import { X } from 'lucide-react';
@@ -10,15 +10,34 @@ interface Props {
   onCancel: () => void;
 }
 
+interface RoleOption {
+  id: number;
+  name: string;
+}
+
 const UserEdit: React.FC<Props> = ({ user, onSuccess, onCancel }) => {
   const [name, setName] = useState(user.name);
   const [username, setUsername] = useState(user.username);
-  const [role, setRole] = useState(user.role);
+  const [roleId, setRoleId] = useState<number>(user.roleId); // Gunakan roleId bawaan dari object user
+  const [roles, setRoles] = useState<RoleOption[]>([]);
+
+  // Mengambil daftar role master agar select option sinkron
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const res = await api.get('/roles');
+        setRoles(res.data);
+      } catch (err) {
+        toast.error('Gagal mengambil data master role');
+      }
+    };
+    fetchRoles();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.put(`/users/${user.id}`, { name, username, role });
+      await api.put(`/users/${user.id}`, { name, username, roleId: Number(roleId) });
       toast.success('Data user berhasil diperbarui!');
       onSuccess();
     } catch (err: any) {
@@ -65,13 +84,14 @@ const UserEdit: React.FC<Props> = ({ user, onSuccess, onCancel }) => {
           <div>
             <label htmlFor="roleSelectEdit" className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">Hak Akses / Role</label>
             <select
-              id="roleSelectEdit" value={role}
-              onChange={(e) => setRole(e.target.value)}
+              id="roleSelectEdit" 
+              value={roleId}
+              onChange={(e) => setRoleId(Number(e.target.value))}
               className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-slate-50 focus:bg-white transition-all"
             >
-              <option value="Admin">Admin</option>
-              <option value="Super Admin">Super Admin</option>
-              <option value="Manajer">Manajer</option>
+              {roles.map((r) => (
+                <option key={r.id} value={r.id}>{r.name}</option>
+              ))}
             </select>
           </div>
 

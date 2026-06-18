@@ -12,6 +12,7 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Ambil fungsi setAuth yang sudah menerima 3 parameter (token, user, permissions)
   const setAuth = useAuthStore((state) => state.setAuth);
   const navigate = useNavigate();
 
@@ -21,10 +22,15 @@ const Login: React.FC = () => {
     setLoading(true);
     try {
       const res = await api.post('/auth/login', { username, password });
-      setAuth(res.data.token, res.data.user);
+      
+      // Ambil token, user, dan array permissions dari response API backend terbaru
+      const { token, user, permissions } = res.data;
+      
+      // Simpan ketiga data tersebut secara sinkron ke dalam Zustand store
+      setAuth(token, user, permissions);
       
       // Memicu notifikasi sukses
-      toast.success(`Selamat Datang, ${res.data.user.name || username}!`, {
+      toast.success(`Selamat Datang, ${user.name || username}!`, {
         duration: 3000,
         icon: '👋',
       });
