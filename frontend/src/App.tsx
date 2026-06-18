@@ -16,11 +16,12 @@ import ForgotPassword from './pages/public/ForgotPassword';
 
 // Impor Halaman Dashboard
 import Dashboard from './pages/Dashboard/Dashboard';
-import Supplier from './pages/Dashboard/Supplier';
-import Criteria from './pages/Dashboard/Criteria';
-import Assessment from './pages/Dashboard/Assessment';
-import Ranking from './pages/Dashboard/Ranking';
-import ManajemenUser from './pages/Dashboard/ManajemenUser';
+import Supplier from './pages/Supplier/SupplierIndex';
+import Criteria from './pages/Criteria/CriteriaIndex';
+import Assessment from './pages/Assessment/Assessment';
+import Ranking from './pages/Rangking/Ranking';
+import ManajemenUser from './pages/ManajemenUser/UsersIndex';
+import Laporan from './pages/Laporan/Laporan';
 
 const App: React.FC = () => {
   const token = useAuthStore((state) => state.token);
@@ -55,8 +56,7 @@ const App: React.FC = () => {
             
             {/* Placeholder untuk halaman pelengkap */}
             <Route path="user" element={<ManajemenUser />} />
-            <Route path="laporan" element={<div className="p-4 bg-white rounded-lg shadow">Halaman Laporan</div>} />
-            <Route path="settings" element={<div className="p-4 bg-white rounded-lg shadow">Halaman Pengaturan</div>} />
+            <Route path="laporan" element={<Laporan />} />
           </Route>
         </Route>
 

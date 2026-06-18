@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
-import { toast } from 'react-hot-toast'; // ✅ Impor toast untuk notifikasi logout
 import {
   LayoutDashboard,
   Users,
@@ -15,7 +14,6 @@ import {
   Truck,
   ChevronRight,
   Bell,
-  Settings,
 } from 'lucide-react';
 
 interface NavItem {
@@ -25,7 +23,6 @@ interface NavItem {
   group?: string;
 }
 
-// ✅ Perbaikan Path: Menggunakan huruf kecil agar sinkron dengan App.tsx
 const navItems: NavItem[] = [
   { to: '/dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard', group: 'Menu Utama' },
   { to: '/dashboard/supplier', icon: <Truck size={18} />, label: 'Data Supplier', group: 'Menu Utama' },
@@ -34,11 +31,11 @@ const navItems: NavItem[] = [
   { to: '/dashboard/penilaian', icon: <ClipboardList size={18} />, label: 'Input Penilaian', group: 'Perhitungan' },
   { to: '/dashboard/hasil', icon: <BarChart3 size={18} />, label: 'Hasil SAW', group: 'Perhitungan' },
   { to: '/dashboard/laporan', icon: <FileText size={18} />, label: 'Laporan', group: 'Laporan' },
-  { to: '/dashboard/settings', icon: <Settings size={18} />, label: 'Pengaturan', group: 'Laporan' },
 ];
 
 const groups = ['Menu Utama', 'Perhitungan', 'Laporan'];
 
+// ✅ SidebarContent di LUAR DashboardLayout — ini fix utamanya
 interface SidebarContentProps {
   user: { name?: string; username?: string } | null;
   onClose: () => void;
@@ -72,7 +69,7 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ user, onClose, onLogout
                 <NavLink
                   key={item.to}
                   to={item.to}
-                  end={item.to === '/dashboard'} // Menghindari tabrakan aktif indikator rute
+                  end={item.to === '/dashboard'}
                   onClick={onClose}
                   className={({ isActive }) =>
                     `flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all group ${
@@ -122,21 +119,15 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ user, onClose, onLogout
   </div>
 );
 
+// ✅ DashboardLayout bersih, SidebarContent dipanggil dengan props
 const DashboardLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout(); // Bersihkan token/session auth
-
-    // ✅ Tampilkan notifikasi keluar yang informatif
-    toast.success('Berhasil keluar dari sistem!', {
-      duration: 3000,
-      icon: '🚀',
-    });
-
-    navigate('/login'); // Pindah ke halaman login
+    logout();
+    navigate('/login');
   };
 
   return (
@@ -200,9 +191,7 @@ const DashboardLayout: React.FC = () => {
               aria-label="Notifications"
               className="relative p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-all"
             >
-              <nav>
-                <Bell size={18} />
-              </nav>
+              <Bell size={18} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-500 rounded-full" />
             </button>
             <div className="flex items-center space-x-2 pl-3 border-l border-slate-200">
@@ -211,7 +200,7 @@ const DashboardLayout: React.FC = () => {
               </div>
               <div className="hidden sm:block">
                 <p className="text-xs font-bold text-slate-800 leading-none">{user?.name || 'Admin'}</p>
-                <p className="text-[10px] text-slate-500 mt-0.5">{user?.username || 'Administrator'}</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">{user?.role || 'Administrator'}</p>
               </div>
             </div>
           </div>
