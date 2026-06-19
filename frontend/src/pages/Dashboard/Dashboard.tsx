@@ -311,9 +311,8 @@ const Dashboard: React.FC = () => {
           </span>
         </div>
         <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-          Selamat Datang,{' '}
+          Selamat Datang{' '}
           <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
-            Admin
           </span>{' '}
           👋
         </h1>
