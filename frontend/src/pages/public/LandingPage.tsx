@@ -31,7 +31,7 @@ const getSupplierName = (item: RankingItem) =>
 const getScore = (item: RankingItem) =>
   safe(item.total_score ?? item.nilai ?? 0);
 const getRankBadge = (rank: number) => {
-  if (rank === 1) return { badge: 'bg-amber-500',  icon: <Award     size={10} /> };
+  if (rank === 1) return { badge: 'bg-amber-500',  icon: <Award      size={10} /> };
   if (rank === 2) return { badge: 'bg-slate-400',  icon: <Star      size={10} /> };
   return              { badge: 'bg-orange-700', icon: <TrendingUp size={10} /> };
 };
@@ -88,7 +88,6 @@ const AnimatedCounter: React.FC<{ target: string; label: string }> = ({ target, 
 };
 
 // ── FeatureCard ────────────────────────────────────────────────────────────────
-// Delay dikontrol lewat CSS class, bukan inline style
 const delayClass: Record<number, string> = {
   0: 'animation-delay-0',
   1: 'animation-delay-120',
@@ -137,7 +136,6 @@ const steps = [
   { icon: <CheckCircle size={20} />, title: 'Lihat Ranking', desc: 'Dapatkan peringkat supplier terbaik berdasarkan skor akhir SAW.' },
 ];
 
-// Step delay Tailwind classes (static — no inline style)
 const stepDelayClass: Record<number, string> = {
   0: 'animation-delay-0',
   1: 'animation-delay-100',
@@ -187,7 +185,6 @@ const HowItWorks: React.FC = () => {
   );
 };
 
-// ── Ranking item delay classes ─────────────────────────────────────────────────
 const rankDelayClass: Record<number, string> = {
   0: 'animation-delay-0',
   1: 'animation-delay-100',
@@ -205,18 +202,17 @@ const LandingPage: React.FC = () => {
     const fetchRanking = async () => {
       try {
         const today     = new Date();
-        const formatted = [
-          today.getFullYear(),
-          String(today.getMonth() + 1).padStart(2, '0'),
-          String(today.getDate()).padStart(2, '0'),
-        ].join('-');
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const formattedPeriod = `${year}-${month}`;
+
         const MONTHS_ID = [
           'Januari','Februari','Maret','April','Mei','Juni',
           'Juli','Agustus','September','Oktober','November','Desember',
         ];
-        setPeriod(`${MONTHS_ID[today.getMonth()]} ${today.getFullYear()}`);
+        setPeriod(`${MONTHS_ID[today.getMonth()]} ${year}`);
 
-        const res  = await api.get('/ranking', { params: { date: formatted } });
+        const res  = await api.get('/ranking', { params: { period: formattedPeriod } });
         const data = Array.isArray(res.data) ? res.data : res.data?.data || [];
 
         const normalized = data.map((item: RankingItem, idx: number) => ({
@@ -242,31 +238,25 @@ const LandingPage: React.FC = () => {
   ];
 
   const stats = [
-    { value: '50+',  label: 'Supplier Terdaftar'  },
-    { value: '12',   label: 'Kriteria Penilaian'  },
+    { value: '10+',  label: 'Supplier Terdaftar'  },
+    { value: '5',   label: 'Kriteria Penilaian'  },
     { value: '99%',  label: 'Akurasi Perhitungan' },
-    { value: '2025', label: 'Tahun Dikembangkan'  },
+    { value: '2026', label: 'Tahun Dikembangkan'  },
   ];
 
   const { ref: featRef, inView: featInView } = useInView(0.05);
 
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans">
-
-      {/* ─── NAVBAR (komponen terpisah) ─── */}
       <Navbar />
 
       {/* ─── HERO ─── */}
       <main id="beranda" className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white">
-        {/* Background orbs — warna & blur via className, bukan inline */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-100 rounded-full blur-[120px] opacity-50 -translate-y-1/4 translate-x-1/4 animate-pulse" />
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-violet-100 rounded-full blur-[100px] opacity-40 translate-y-1/4 -translate-x-1/4 animate-pulse" />
-
-        {/* Subtle grid */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.03)_1px,transparent_1px)] bg-[size:60px_60px]" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 md:pt-24 md:pb-28 flex flex-col lg:flex-row items-center gap-16">
-
           {/* Kiri */}
           <div className="flex-1 text-center lg:text-left space-y-7">
             <div className="inline-flex items-center space-x-2 bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs px-4 py-1.5 rounded-full font-bold uppercase tracking-wider">
@@ -314,7 +304,6 @@ const LandingPage: React.FC = () => {
               </a>
             </div>
 
-            {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 pt-2 border-t border-slate-100">
               {stats.map((s) => (
                 <AnimatedCounter key={s.label} target={s.value} label={s.label} />
@@ -332,7 +321,6 @@ const LandingPage: React.FC = () => {
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.04)_1px,transparent_0)] bg-[size:18px_18px]" />
                 <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent" />
 
-                {/* Header card */}
                 <div className="relative z-10 flex items-center justify-between mb-5">
                   <div>
                     <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Hasil Evaluasi</p>
@@ -342,16 +330,15 @@ const LandingPage: React.FC = () => {
                   </div>
                   <div className="flex items-center space-x-1.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] px-2.5 py-1 rounded-full font-bold">
                     <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                    <span>Live</span>
+                    <span>Bulanan</span>
                   </div>
                 </div>
 
-                {/* Rankings */}
-                <div className="relative z-10 space-y-2.5 min-h-[200px]">
+                <div className="relative z-10 space-y-2.5 min-h-[200px] flex flex-col justify-center">
                   {loadingRank ? (
                     <div className="flex flex-col items-center justify-center h-[200px] space-y-3">
                       <RefreshCw size={22} className="text-indigo-400 animate-spin" />
-                      <p className="text-slate-500 text-xs">Memuat ranking terbaru...</p>
+                      <p className="text-slate-500 text-xs">Memuat ranking bulanan...</p>
                     </div>
                   ) : rankings.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-[200px] space-y-3">
@@ -359,14 +346,8 @@ const LandingPage: React.FC = () => {
                         <BarChart3 size={22} className="text-slate-600" />
                       </div>
                       <p className="text-slate-500 text-xs text-center leading-relaxed">
-                        Belum ada data ranking<br />untuk hari ini
+                        Belum ada data ranking<br />untuk bulan ini
                       </p>
-                      <button
-                        onClick={() => navigate('/login')}
-                        className="text-indigo-400 text-xs font-semibold hover:text-indigo-300 transition-colors"
-                      >
-                        Masuk untuk input data →
-                      </button>
                     </div>
                   ) : (
                     rankings.map((item, index) => {
@@ -398,22 +379,10 @@ const LandingPage: React.FC = () => {
                                 {score.toFixed(3)}
                               </span>
                             </div>
-                            {/* Bar width via CSS custom property — no inline width style */}
                             <div className="h-1 bg-white/8 rounded-full overflow-hidden">
                               <div
-                                className={[
-                                  'h-full rounded-full transition-all duration-1000',
-                                  index === 0 ? 'bg-amber-400' : 'bg-indigo-400',
-                                  barWidth >= 90 ? 'w-[90%]'  :
-                                  barWidth >= 80 ? 'w-[80%]'  :
-                                  barWidth >= 70 ? 'w-[70%]'  :
-                                  barWidth >= 60 ? 'w-[60%]'  :
-                                  barWidth >= 50 ? 'w-[50%]'  :
-                                  barWidth >= 40 ? 'w-[40%]'  :
-                                  barWidth >= 30 ? 'w-[30%]'  :
-                                  barWidth >= 20 ? 'w-[20%]'  :
-                                  barWidth >= 10 ? 'w-[10%]'  : 'w-full',
-                                ].join(' ')}
+                                className={`h-full rounded-full transition-all duration-1000 ${index === 0 ? 'bg-amber-400' : 'bg-indigo-400'}`}
+                                style={{ width: `${barWidth}%` }}
                               />
                             </div>
                             <p className="text-slate-600 text-[10px] mt-1">Rank #{item.rank ?? index + 1}</p>
@@ -424,9 +393,8 @@ const LandingPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Footer card */}
-                <div className="relative z-10 mt-4 pt-4 border-t border-white/8 flex items-center justify-between">
-                  <p className="text-slate-600 text-[10px]">⚡ Powered by SAW Algorithm</p>
+                {/* Bagian bawah disederhanakan, menghapus tulisan Powered By */}
+                <div className="relative z-10 mt-4 pt-4 border-t border-white/8 flex items-center justify-end">
                   <button
                     onClick={() => navigate('/login')}
                     className="flex items-center space-x-1 text-indigo-400 text-[10px] font-bold hover:text-indigo-300 transition-colors group"
@@ -437,21 +405,11 @@ const LandingPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Floating badge */}
-              <div className="absolute -bottom-3 -left-3 bg-white border border-slate-100 rounded-2xl px-3 py-2 shadow-xl flex items-center space-x-2">
-                <div className="w-6 h-6 bg-emerald-100 rounded-lg flex items-center justify-center">
-                  <CheckCircle size={13} className="text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-slate-800 text-[10px] font-black">Terverifikasi</p>
-                  <p className="text-slate-400 text-[9px]">Metode SAW Terbukti</p>
-                </div>
-              </div>
+              {/* Badge Terverifikasi di pojok kiri bawah luar card sudah dihapus */}
             </div>
           </div>
         </div>
 
-        {/* Scroll indicator */}
         <div className="flex justify-center pb-8">
           <a href="#fitur" className="flex flex-col items-center space-y-1 text-slate-400 hover:text-indigo-500 transition-colors group">
             <span className="text-[10px] font-semibold uppercase tracking-widest">Scroll</span>
@@ -505,7 +463,7 @@ const LandingPage: React.FC = () => {
             Mulai Evaluasi Supplier<br />Hari Ini
           </h2>
           <p className="text-indigo-200 text-base mb-8 max-w-xl mx-auto">
-            Masuk ke sistem dan jalankan penilaian pertamamu dalam hitungan menit. Tidak perlu konfigurasi rumit.
+            Masuk ke system dan jalankan penilaian pertamamu dalam hitungan menit. Tidak perlu konfigurasi rumit.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <button
@@ -520,7 +478,6 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* ─── FOOTER ─── */}
       <Footer />
     </div>
   );

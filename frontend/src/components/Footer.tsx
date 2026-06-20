@@ -69,11 +69,11 @@ const Footer: React.FC = () => {
             <ul className="space-y-3">
               <li className="flex items-start space-x-2.5">
                 <Mail size={14} className="text-slate-500 mt-0.5 flex-shrink-0" />
-                <span className="text-slate-400 text-sm">spk@universitasharkat.ac.id</span>
+                <span className="text-slate-400 text-sm">spk@Kelompok2.com</span>
               </li>
               <li className="flex items-start space-x-2.5">
                 <ExternalLink size={14} className="text-slate-500 mt-0.5 flex-shrink-0" />
-                <span className="text-slate-400 text-sm">https://www.universitasharkat.ac.id</span>
+                <span className="text-slate-400 text-sm">https://www.kelompok2.com</span>
               </li>
             </ul>
             <div className="pt-2">
@@ -90,7 +90,7 @@ const Footer: React.FC = () => {
       <div className="border-t border-slate-800/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-slate-600 text-xs">
-            &copy; 2026 Universitas Harkat Negeri — SPK Pemilihan Supplier Terbaik
+            &copy; 2026 Kelompok2 — SPK Pemilihan Supplier Terbaik
           </p>
           <p className="text-slate-700 text-xs">
             Dibuat dengan ❤️ untuk efisiensi rantai pasok
