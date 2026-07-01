@@ -7,12 +7,12 @@ import { toast } from 'react-hot-toast';
 const Register: React.FC = () => {
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState('Admin');
+  const [role, setRole] = useState('Admin Toko');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -44,6 +44,7 @@ const Register: React.FC = () => {
       await api.post('/auth/register', {
         name,
         username,
+        email,
         password: cleanPassword,
         passwordConfirm: cleanConfirmPassword,
         role,
@@ -55,9 +56,11 @@ const Register: React.FC = () => {
       });
 
       navigate('/login');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Registrasi gagal, silakan coba lagi.');
-      toast.error(err.response?.data?.message || 'Registrasi gagal!');
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      const msg = e.response?.data?.message || 'Registrasi gagal, silakan coba lagi.';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -65,14 +68,12 @@ const Register: React.FC = () => {
 
   return (
     <>
-      {/* Header Teks */}
       <div className="mb-6">
         <p className="text-xs font-bold text-indigo-600 tracking-widest uppercase mb-1">Buat Akun Baru</p>
         <h1 className="text-3xl font-black text-slate-900 mb-1">Registrasi Admin</h1>
         <p className="text-slate-500 text-sm">Isi data di bawah untuk mendaftar sebagai administrator sistem.</p>
       </div>
 
-      {/* Alert Error */}
       {error && (
         <div className="mb-4 flex items-start space-x-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs p-3.5 rounded-xl">
           <span className="text-rose-500 mt-0.5">⚠</span>
@@ -80,7 +81,6 @@ const Register: React.FC = () => {
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleRegister} className="space-y-4">
 
         {/* Nama Lengkap */}
@@ -113,6 +113,24 @@ const Register: React.FC = () => {
           />
         </div>
 
+        {/* Email Gmail */}
+        <div>
+          <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">
+            Alamat Gmail
+          </label>
+          <input
+            type="email"
+            placeholder="contoh@gmail.com"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
+          />
+          <p className="mt-1 text-[11px] text-slate-400">
+            Gmail ini digunakan untuk reset password jika lupa.
+          </p>
+        </div>
+
         {/* Role */}
         <div>
           <label htmlFor="role" className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">
@@ -124,9 +142,8 @@ const Register: React.FC = () => {
             onChange={(e) => setRole(e.target.value)}
             className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
           >
-            <option value="Admin">Admin</option>
+            <option value="Admin Toko">Admin Toko</option>
             <option value="Super Admin">Super Admin</option>
-            <option value="Manajer">Manajer</option>
           </select>
           <p className="mt-1 text-[11px] text-slate-400">
             Role menentukan hak akses yang dimiliki pengguna dalam sistem.
@@ -201,21 +218,18 @@ const Register: React.FC = () => {
         </button>
       </form>
 
-      {/* Divider */}
       <div className="flex items-center my-5">
         <div className="flex-1 h-px bg-slate-200" />
         <span className="px-3 text-[11px] text-slate-400 font-medium">Sudah punya akun?</span>
         <div className="flex-1 h-px bg-slate-200" />
       </div>
 
-      {/* Link Login */}
       <p className="text-center text-sm text-slate-500">
         <Link to="/login" className="font-bold text-indigo-600 hover:text-indigo-800 transition-colors">
           Masuk sekarang
         </Link>
       </p>
 
-      {/* Kembali Beranda */}
       <div className="mt-6 text-center">
         <button
           onClick={() => navigate('/')}

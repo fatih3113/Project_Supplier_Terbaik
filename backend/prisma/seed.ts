@@ -7,21 +7,21 @@ async function main() {
 
   // ── 1. BUAT SEMUA PERMISSIONS ──────────────────────────────
   const allPermissions = [
-    { name: 'user.view',            description: 'Lihat daftar user' },
-    { name: 'user.create',          description: 'Tambah user baru' },
-    { name: 'user.edit',            description: 'Edit data user' },
-    { name: 'user.delete',          description: 'Hapus user' },
-    { name: 'user.reset_password',  description: 'Reset password user' },
-    { name: 'kriteria.view',        description: 'Lihat daftar kriteria' },
-    { name: 'kriteria.create',      description: 'Tambah kriteria' },
-    { name: 'kriteria.edit',        description: 'Edit kriteria' },
-    { name: 'kriteria.delete',      description: 'Hapus kriteria' },
-    { name: 'supplier.view',        description: 'Lihat daftar supplier' },
-    { name: 'supplier.create',      description: 'Tambah supplier' },
-    { name: 'supplier.edit',        description: 'Edit supplier' },
-    { name: 'supplier.delete',      description: 'Hapus supplier' },
-    { name: 'laporan.view',         description: 'Lihat laporan hasil SPK' },
-    { name: 'spk.calculate',        description: 'Jalankan kalkulasi SPK' },
+    { name: 'user.view',           description: 'Lihat daftar user' },
+    { name: 'user.create',         description: 'Tambah user baru' },
+    { name: 'user.edit',           description: 'Edit data user' },
+    { name: 'user.delete',         description: 'Hapus user' },
+    { name: 'user.reset_password', description: 'Reset password user' },
+    { name: 'kriteria.view',       description: 'Lihat daftar kriteria' },
+    { name: 'kriteria.create',     description: 'Tambah kriteria' },
+    { name: 'kriteria.edit',       description: 'Edit kriteria' },
+    { name: 'kriteria.delete',     description: 'Hapus kriteria' },
+    { name: 'supplier.view',       description: 'Lihat daftar supplier' },
+    { name: 'supplier.create',     description: 'Tambah supplier' },
+    { name: 'supplier.edit',       description: 'Edit supplier' },
+    { name: 'supplier.delete',     description: 'Hapus supplier' },
+    { name: 'laporan.view',        description: 'Lihat laporan hasil SPK' },
+    { name: 'spk.calculate',       description: 'Jalankan kalkulasi SPK' },
   ];
 
   for (const p of allPermissions) {
@@ -50,11 +50,11 @@ async function main() {
   }
   console.log('✅ Role Super Admin selesai');
 
-  // ── 3. BUAT ROLE ADMIN ─────────────────────────────────────
+  // ── 3. BUAT ROLE ADMIN TOKO ────────────────────────────────
   const adminRole = await prisma.role.upsert({
-    where:  { name: 'Admin' },
+    where:  { name: 'Admin Toko' },
     update: {},
-    create: { name: 'Admin', description: 'Akses operasional harian' },
+    create: { name: 'Admin Toko', description: 'Akses operasional harian toko' },
   });
 
   const adminPermissions = [
@@ -62,6 +62,7 @@ async function main() {
     'supplier.view', 'supplier.create', 'supplier.edit',
     'laporan.view',  'spk.calculate',
   ];
+
   for (const permName of adminPermissions) {
     const perm = await prisma.permission.findUnique({ where: { name: permName } });
     if (perm) {
@@ -72,29 +73,9 @@ async function main() {
       });
     }
   }
-  console.log('✅ Role Admin selesai');
+  console.log('✅ Role Admin Toko selesai');
 
-  // ── 4. BUAT ROLE MANAJER (view only) ──────────────────────
-  const manajerRole = await prisma.role.upsert({
-    where:  { name: 'Manajer' },
-    update: {},
-    create: { name: 'Manajer', description: 'Hanya bisa melihat laporan' },
-  });
-
-  const manajerPermissions = ['kriteria.view', 'supplier.view', 'laporan.view'];
-  for (const permName of manajerPermissions) {
-    const perm = await prisma.permission.findUnique({ where: { name: permName } });
-    if (perm) {
-      await prisma.rolePermission.upsert({
-        where:  { roleId_permissionId: { roleId: manajerRole.id, permissionId: perm.id } },
-        update: {},
-        create: { roleId: manajerRole.id, permissionId: perm.id },
-      });
-    }
-  }
-  console.log('✅ Role Manajer selesai');
-
-  // ── 5. BUAT AKUN SUPER ADMIN AWAL ─────────────────────────
+  // ── 4. BUAT AKUN SUPER ADMIN AWAL ─────────────────────────
   const hashedPassword = await bcrypt.hash('superadmin123', 10);
   await prisma.user.upsert({
     where:  { username: 'superadmin' },
@@ -102,6 +83,7 @@ async function main() {
     create: {
       name:     'Super Administrator',
       username: 'superadmin',
+      email:    'superadmin@gmail.com', // ← field email wajib diisi
       password: hashedPassword,
       roleId:   superAdminRole.id,
     },
@@ -111,6 +93,7 @@ async function main() {
   console.log('🎉 Seed RBAC selesai!');
   console.log('   Username : superadmin');
   console.log('   Password : superadmin123');
+  console.log('   Email    : superadmin@gmail.com');
 }
 
 main()

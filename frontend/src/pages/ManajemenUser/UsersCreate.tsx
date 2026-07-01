@@ -13,24 +13,24 @@ interface RoleOption {
   name: string;
 }
 
-const UserCreate: React.FC<Props> = ({ onSuccess, onCancel }) => {
+const UsersCreate: React.FC<Props> = ({ onSuccess, onCancel }) => {
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [roleId, setRoleId] = useState<number | string>('');
   const [roles, setRoles] = useState<RoleOption[]>([]);
   const [loadingRoles, setLoadingRoles] = useState(true);
 
-  // Ambil list master role dari database MySQL
   useEffect(() => {
     const fetchRoles = async () => {
       try {
         const res = await api.get('/roles');
         setRoles(res.data);
         if (res.data.length > 0) {
-          setRoleId(res.data[0].id); // Default ke role pertama
+          setRoleId(res.data[0].id);
         }
-      } catch (err) {
+      } catch {
         toast.error('Gagal memuat tingkatan hak akses');
       } finally {
         setLoadingRoles(false);
@@ -49,20 +49,26 @@ const UserCreate: React.FC<Props> = ({ onSuccess, onCancel }) => {
       toast.error('Role belum siap atau belum dipilih!');
       return;
     }
-
     try {
-      // Kirim data menggunakan roleId (angka) sesuai relasi tabel database baru
-      await api.post('/users', { name, username, password, roleId: Number(roleId) });
+      await api.post('/users', {
+        name,
+        username,
+        email,
+        password,
+        roleId: Number(roleId),
+      });
       toast.success('User baru berhasil ditambahkan!');
       onSuccess();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Terjadi kesalahan sistem');
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      toast.error(e.response?.data?.message || 'Terjadi kesalahan sistem');
     }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
       <div className="bg-white w-full max-w-md rounded-2xl border border-slate-100 shadow-2xl overflow-hidden">
+
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
           <h3 className="text-base font-bold text-slate-900">Tambah Pengguna Baru</h3>
@@ -78,8 +84,12 @@ const UserCreate: React.FC<Props> = ({ onSuccess, onCancel }) => {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+
+          {/* Nama Lengkap */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">Nama Lengkap</label>
+            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">
+              Nama Lengkap
+            </label>
             <input
               type="text" required value={name}
               onChange={(e) => setName(e.target.value)}
@@ -87,8 +97,12 @@ const UserCreate: React.FC<Props> = ({ onSuccess, onCancel }) => {
               className="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-slate-50 focus:bg-white transition-all"
             />
           </div>
+
+          {/* Username */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">Username / NIM</label>
+            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">
+              Username / NIM
+            </label>
             <input
               type="text" required value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -96,8 +110,28 @@ const UserCreate: React.FC<Props> = ({ onSuccess, onCancel }) => {
               className="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-slate-50 focus:bg-white transition-all"
             />
           </div>
+
+          {/* Email */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">Password (Min. 8 Karakter)</label>
+            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">
+              Alamat Gmail
+            </label>
+            <input
+              type="email" required value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="contoh@gmail.com"
+              className="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-slate-50 focus:bg-white transition-all"
+            />
+            <p className="mt-1 text-[11px] text-slate-400">
+              Digunakan untuk reset password jika lupa.
+            </p>
+          </div>
+
+          {/* Password */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">
+              Password (Min. 8 Karakter)
+            </label>
             <input
               type="password" required value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -105,10 +139,14 @@ const UserCreate: React.FC<Props> = ({ onSuccess, onCancel }) => {
               className="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-slate-50 focus:bg-white transition-all"
             />
           </div>
+
+          {/* Role */}
           <div>
-            <label htmlFor="roleSelect" className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">Hak Akses / Role</label>
+            <label htmlFor="roleSelect" className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">
+              Hak Akses / Role
+            </label>
             <select
-              id="roleSelect" 
+              id="roleSelect"
               value={roleId}
               disabled={loadingRoles}
               onChange={(e) => setRoleId(e.target.value)}
@@ -124,7 +162,7 @@ const UserCreate: React.FC<Props> = ({ onSuccess, onCancel }) => {
             </select>
           </div>
 
-          <div className="flex items-center justify-end space-x-2 pt-4 border-t border-slate-100 mt-6">
+          <div className="flex items-center justify-end space-x-2 pt-4 border-t border-slate-100 mt-2">
             <button
               type="button" onClick={onCancel}
               className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
@@ -144,4 +182,4 @@ const UserCreate: React.FC<Props> = ({ onSuccess, onCancel }) => {
   );
 };
 
-export default UserCreate;
+export default UsersCreate;

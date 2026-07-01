@@ -20,10 +20,24 @@ const safe = (val: unknown): number => {
   const n = parseFloat(String(val));
   return isNaN(n) ? 0 : n;
 };
-const getSupplierName = (item: RankingItem) =>
+
+const getSupplierName = (item: RankingItem): string =>
   item.nama_supplier || item.supplier_name || '-';
-const getScore = (item: RankingItem) =>
+
+const getScore = (item: RankingItem): number =>
   safe(item.total_score ?? item.nilai ?? 0);
+
+// ── Raw API response type ─────────────────────────────────────────────────────
+interface RankingRaw {
+  id?: number;
+  supplier_id?: number;
+  supplier_name?: string;
+  nama_supplier?: string;
+  total_score?: number | string;
+  nilai?: number | string;
+  rank?: number;
+  [key: string]: unknown;
+}
 
 const AuthLayout: React.FC = () => {
   const [rankings, setRankings] = useState<RankingItem[]>([]);
@@ -34,28 +48,36 @@ const AuthLayout: React.FC = () => {
     const fetchRanking = async () => {
       try {
         const today = new Date();
-        // Menggunakan format YYYY-MM untuk filter 1 bulan penuh
         const year = today.getFullYear();
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const formattedPeriod = `${year}-${month}`;
-        
+
         const MONTHS_ID = [
           'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
           'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
         ];
         setPeriod(`${MONTHS_ID[today.getMonth()]} ${year}`);
 
-        // Kirim parameter period ke backend
-        const res = await api.get('/ranking', { params: { period: formattedPeriod } });
-        const data = Array.isArray(res.data) ? res.data : res.data?.data || [];
+        const res = await api.get<RankingRaw[] | { data: RankingRaw[] }>(
+          '/ranking',
+          { params: { period: formattedPeriod } }
+        );
 
-        const normalized = data.map((item: RankingItem, idx: number) => ({
-          ...item,
+        const raw = res.data;
+        const data: RankingRaw[] = Array.isArray(raw)
+          ? raw
+          : (raw as { data: RankingRaw[] }).data ?? [];
+
+        const normalized: RankingItem[] = data.map((item, idx) => ({
+          id:           item.id ?? 0,
+          supplier_id:  item.supplier_id,
+          supplier_name: item.supplier_name,
           nama_supplier: item.nama_supplier || item.supplier_name || '-',
-          total_score: item.total_score ?? item.nilai ?? 0,
-          rank: item.rank ?? idx + 1,
+          total_score:  item.total_score ?? item.nilai ?? 0,
+          nilai:        item.nilai,
+          rank:         item.rank ?? idx + 1,
         }));
-        
+
         setRankings(normalized.slice(0, 3));
       } catch (error) {
         console.error('Gagal memuat data ranking bulanan di AuthLayout:', error);
@@ -68,18 +90,25 @@ const AuthLayout: React.FC = () => {
     fetchRanking();
   }, []);
 
+  const getBadgeStyle = (rank: number): { bg: string; icon: React.ReactNode } => {
+    if (rank === 1) return { bg: 'bg-emerald-500/20 text-emerald-400', icon: <Star size={14} /> };
+    if (rank === 2) return { bg: 'bg-indigo-500/20 text-indigo-400', icon: <TrendingUp size={14} /> };
+    return { bg: 'bg-amber-500/20 text-amber-400', icon: <ShieldCheck size={14} /> };
+  };
+
   return (
     <div className="min-h-screen flex font-sans">
-      {/* ─── PANEL KIRI: Ilustrasi & Realtime Branding ─── */}
+
+      {/* ─── PANEL KIRI ─── */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] relative overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex-col">
-        {/* Dot grid pattern */}
+        {/* Dot grid */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,_rgba(255,255,255,0.06)_1px,_transparent_0)] bg-[size:28px_28px]" />
 
         {/* Glow orbs */}
         <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl" />
         <div className="absolute bottom-[-10%] left-[-10%] w-80 h-80 bg-violet-600/15 rounded-full blur-3xl" />
 
-        {/* Logo atas */}
+        {/* Logo */}
         <div className="relative z-10 p-8 flex items-center space-x-3">
           <div className="bg-indigo-500 p-2 rounded-xl text-white shadow-lg shadow-indigo-500/30">
             <Truck size={22} />
@@ -92,9 +121,8 @@ const AuthLayout: React.FC = () => {
 
         {/* Konten tengah */}
         <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-12 text-center">
-          {/* Visual card besar */}
           <div className="w-full max-w-sm bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-6 shadow-2xl mb-8">
-            
+
             {/* Header Mini Dashboard */}
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
               <div className="flex items-center space-x-2">
@@ -109,7 +137,7 @@ const AuthLayout: React.FC = () => {
               </div>
             </div>
 
-            {/* List Supplier Realtime */}
+            {/* List Ranking */}
             <div className="space-y-2.5 min-h-[180px] flex flex-col justify-center">
               {loadingRank ? (
                 <div className="flex flex-col items-center justify-center py-8 space-y-2">
@@ -122,41 +150,40 @@ const AuthLayout: React.FC = () => {
                 </div>
               ) : (
                 rankings.map((item, index) => {
-                  const score = getScore(item);
+                  const score    = getScore(item);
                   const maxScore = getScore(rankings[0]) || 1;
                   const barWidth = Math.min((score / maxScore) * 100, 100);
-
-                  const getBadgeStyle = (rank: number) => {
-                    if (rank === 1) return { bg: 'bg-emerald-500/20 text-emerald-400', icon: <Star size={14} /> };
-                    if (rank === 2) return { bg: 'bg-indigo-500/20 text-indigo-400', icon: <TrendingUp size={14} /> };
-                    return { bg: 'bg-amber-500/20 text-amber-400', icon: <ShieldCheck size={14} /> };
-                  };
-
-                  const badgeStyle = getBadgeStyle(index + 1);
+                  const badge    = getBadgeStyle(index + 1);
 
                   return (
-                    <div 
-                      key={item.id ?? item.supplier_id ?? index} 
-                      className={`bg-white/5 rounded-xl p-3 border border-white/5 transition-all duration-300 ${index === 0 ? 'bg-indigo-950/40 border-indigo-500/20' : ''}`}
+                    <div
+                      key={item.id ?? item.supplier_id ?? index}
+                      className={`bg-white/5 rounded-xl p-3 border border-white/5 transition-all duration-300 ${
+                        index === 0 ? 'bg-indigo-950/40 border-indigo-500/20' : ''
+                      }`}
                     >
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center space-x-3 text-left min-w-0">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${badgeStyle.bg}`}>
-                            {badgeStyle.icon}
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${badge.bg}`}>
+                            {badge.icon}
                           </div>
                           <div className="truncate">
-                            <p className="text-white text-xs font-semibold truncate max-w-[150px]">{getSupplierName(item)}</p>
+                            <p className="text-white text-xs font-semibold truncate max-w-[150px]">
+                              {getSupplierName(item)}
+                            </p>
                             <p className="text-indigo-300 text-[10px]">Rank #{item.rank ?? index + 1}</p>
                           </div>
                         </div>
-                        <span className={`text-xs font-black ${index === 0 ? 'text-amber-400' : 'text-indigo-300'}`}>
+                        <span className={`text-xs font-black flex-shrink-0 ml-2 ${index === 0 ? 'text-amber-400' : 'text-indigo-300'}`}>
                           {score.toFixed(3)}
                         </span>
                       </div>
 
                       <div className="h-1 bg-white/5 rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full transition-all duration-1000 ${index === 0 ? 'bg-amber-400' : 'bg-indigo-400'}`}
+                          className={`h-full rounded-full transition-all duration-1000 ${
+                            index === 0 ? 'bg-amber-400' : 'bg-indigo-400'
+                          }`}
                           style={{ width: `${barWidth}%` }}
                         />
                       </div>

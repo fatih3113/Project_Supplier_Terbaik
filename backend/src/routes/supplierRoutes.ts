@@ -8,7 +8,12 @@ const router = Router();
 // Proteksi semua route supplier dengan middleware auth
 router.use(authenticateToken);
 
-router.get('/', checkPermission('supplier.view'), getSuppliers);
+// router.get('/', checkPermission('supplier.view'), getSuppliers);
+// router.post('/', checkPermission('supplier.create'), createSupplier);
+// router.put('/:id', checkPermission('supplier.edit'), updateSupplier);
+// router.delete('/:id', checkPermission('supplier.delete'), deleteSupplier);
+
+router.get('/', authenticateToken, getSuppliers);
 router.post('/', checkPermission('supplier.create'), createSupplier);
 router.put('/:id', checkPermission('supplier.edit'), updateSupplier);
 router.delete('/:id', checkPermission('supplier.delete'), deleteSupplier);

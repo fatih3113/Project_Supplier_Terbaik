@@ -3,16 +3,21 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../../lib/axios';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
-import { toast } from 'react-hot-toast'; // Impor toast untuk notifikasi sukses login
+import { toast } from 'react-hot-toast';
+
+interface LoginResponse {
+  token: string;
+  user: { name: string; id: number; role: string; username: string };
+  permissions: string[];
+}
 
 const Login: React.FC = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Ambil fungsi setAuth yang sudah menerima 3 parameter (token, user, permissions)
   const setAuth = useAuthStore((state) => state.setAuth);
   const navigate = useNavigate();
 
@@ -21,23 +26,20 @@ const Login: React.FC = () => {
     setError('');
     setLoading(true);
     try {
-      const res = await api.post('/auth/login', { username, password });
-      
-      // Ambil token, user, dan array permissions dari response API backend terbaru
+      const res = await api.post<LoginResponse>('/auth/login', { email, password });
       const { token, user, permissions } = res.data;
-      
-      // Simpan ketiga data tersebut secara sinkron ke dalam Zustand store
+
       setAuth(token, user, permissions);
-      
-      // Memicu notifikasi sukses
-      toast.success(`Selamat Datang, ${user.name || username}!`, {
+
+      toast.success(`Selamat Datang, ${user.name}!`, {
         duration: 3000,
         icon: '👋',
       });
 
       navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Login gagal, periksa username & password Anda.');
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      setError(e.response?.data?.message || 'Login gagal, periksa email & password Anda.');
     } finally {
       setLoading(false);
     }
@@ -45,7 +47,7 @@ const Login: React.FC = () => {
 
   return (
     <>
-      {/* Header teks */}
+      {/* Header */}
       <div className="mb-8">
         <p className="text-xs font-bold text-indigo-600 tracking-widest uppercase mb-2">SPK Pemilihan Supplier</p>
         <h1 className="text-3xl font-black text-slate-900 mb-2">Selamat Datang</h1>
@@ -62,20 +64,23 @@ const Login: React.FC = () => {
 
       {/* Form */}
       <form onSubmit={handleLogin} className="space-y-5">
+
+        {/* Email */}
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-            Username / NIM
+            Masukan Gmail
           </label>
           <input
-            type="text"
-            placeholder="Contoh: 24090002"
+            type="email"
+            placeholder="contoh@gmail.com"
             required
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
           />
         </div>
 
+        {/* Password */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="block text-sm font-semibold text-slate-700">Password</label>
@@ -105,6 +110,7 @@ const Login: React.FC = () => {
           </div>
         </div>
 
+        {/* Submit */}
         <button
           type="submit"
           disabled={loading}
@@ -112,8 +118,8 @@ const Login: React.FC = () => {
         >
           {loading ? (
             <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
           ) : (
             <>

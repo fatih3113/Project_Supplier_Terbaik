@@ -3,7 +3,7 @@ import api from '../../lib/axios';
 import { toast } from 'react-hot-toast';
 import { 
   UserPlus, Search, Edit2, Trash2, Shield, 
-  RefreshCw, Users, AlertTriangle, Key
+  RefreshCw, Users,
 } from 'lucide-react';
 import UsersCreate from './UsersCreate';
 import UsersEdit from './UsersEdit';
@@ -12,21 +12,22 @@ export interface User {
   id: number;
   name: string;
   username: string;
-  roleId: number; 
+  email: string;       // ← tambah ini
+  roleId: number;
   role: {
     name: string;
   };
 }
 
-// ── Badge warna per Jenis Role / Hak Akses ─────────────────────────────────────
+// ── Badge warna per Jenis Role ─────────────────────────────────────────────────
 const RoleBadge: React.FC<{ roleName: string }> = ({ roleName }) => {
-  const isAdmin = roleName.toLowerCase().includes('admin');
+  const isSuperAdmin = roleName.toLowerCase().includes('super');
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${
-        isAdmin
-          ? 'bg-indigo-50 text-indigo-700 border-indigo-100'
-          : 'bg-emerald-50 text-emerald-700 border-emerald-100'
+        isSuperAdmin
+          ? 'bg-violet-50 text-violet-700 border-violet-100'
+          : 'bg-indigo-50 text-indigo-700 border-indigo-100'
       }`}
     >
       <Shield size={11} />
@@ -35,7 +36,7 @@ const RoleBadge: React.FC<{ roleName: string }> = ({ roleName }) => {
   );
 };
 
-// ── Empty state jika user kosong ───────────────────────────────────────────────
+// ── Empty state ────────────────────────────────────────────────────────────────
 const EmptyState: React.FC<{ onAdd: () => void; filtered: boolean }> = ({ onAdd, filtered }) => (
   <div className="flex flex-col items-center justify-center py-20 text-center">
     <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
@@ -62,7 +63,7 @@ const EmptyState: React.FC<{ onAdd: () => void; filtered: boolean }> = ({ onAdd,
   </div>
 );
 
-// ── Komponen Utama ────────────────────────────────────────────────────────────
+// ── Komponen Utama ─────────────────────────────────────────────────────────────
 const UserIndex: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
@@ -75,8 +76,9 @@ const UserIndex: React.FC = () => {
     try {
       const response = await api.get('/users');
       setUsers(response.data);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Gagal mengambil data user');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Gagal mengambil data user';
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -90,8 +92,9 @@ const UserIndex: React.FC = () => {
         await api.delete(`/users/${id}`);
         toast.success('User berhasil dihapus');
         fetchUsers();
-      } catch (err: any) {
-        toast.error(err.response?.data?.message || 'Gagal menghapus user');
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Gagal menghapus user';
+        toast.error(message);
       }
     }
   };
@@ -101,8 +104,9 @@ const UserIndex: React.FC = () => {
       try {
         await api.post('/auth/forgot-password', { username: usernameTarget });
         toast.success(`Password ${usernameTarget} berhasil di-reset menjadi "123456"`);
-      } catch (err: any) {
-        toast.error(err.response?.data?.message || 'Gagal mereset password');
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Gagal mereset password';
+        toast.error(message);
       }
     }
   };
@@ -113,7 +117,6 @@ const UserIndex: React.FC = () => {
     fetchUsers();
   };
 
-  // Filter Data Berdasarkan Nama, Username, maupun Nama Role
   const filtered = users.filter((u) =>
     [u.name, u.username, u.role?.name || '']
       .join(' ')
@@ -121,14 +124,19 @@ const UserIndex: React.FC = () => {
       .includes(search.toLowerCase())
   );
 
-  // Statistik Ringkasan Pengaruh
-  const countAdmin = users.filter((u) => u.role?.name?.toLowerCase().includes('admin')).length;
-  const countUser = users.length - countAdmin;
+  const countSuperAdmin = users.filter((u) =>
+    u.role?.name?.toLowerCase().includes('super')
+  ).length;
+
+  const countAdminToko = users.filter((u) =>
+    u.role?.name?.toLowerCase().includes('admin') &&
+    !u.role?.name?.toLowerCase().includes('super')
+  ).length;
 
   return (
     <>
       <div className="space-y-5">
-        
+
         {/* ── Header ── */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -148,8 +156,8 @@ const UserIndex: React.FC = () => {
 
         {/* ── Summary chips + Search ── */}
         <div className="flex flex-col sm:flex-row gap-3">
-          {/* Stat chips */}
           <div className="flex gap-2 flex-shrink-0 flex-wrap">
+
             {/* Total Users */}
             <div className="flex items-center gap-2 bg-white border border-slate-100 rounded-xl px-3.5 py-2.5 shadow-sm">
               <div className="w-7 h-7 bg-indigo-100 rounded-lg flex items-center justify-center">
@@ -161,30 +169,30 @@ const UserIndex: React.FC = () => {
               </div>
             </div>
 
-            {/* Total Administrator */}
+            {/* Super Admin */}
             <div className="flex items-center gap-2 bg-white border border-slate-100 rounded-xl px-3.5 py-2.5 shadow-sm">
               <div className="w-7 h-7 bg-violet-100 rounded-lg flex items-center justify-center">
                 <Shield size={13} className="text-violet-600" />
               </div>
               <div>
-                <p className="text-[10px] text-slate-400 leading-none">Admin</p>
-                <p className="text-sm font-black text-slate-800">{countAdmin}</p>
+                <p className="text-[10px] text-slate-400 leading-none">Super Admin</p>
+                <p className="text-sm font-black text-slate-800">{countSuperAdmin}</p>
               </div>
             </div>
 
-            {/* Total Regular User / Mahasiswa */}
+            {/* Admin Toko */}
             <div className="flex items-center gap-2 bg-white border border-slate-100 rounded-xl px-3.5 py-2.5 shadow-sm">
-              <div className="w-7 h-7 bg-emerald-100 rounded-lg flex items-center justify-center">
-                <Users size={13} className="text-emerald-600" />
+              <div className="w-7 h-7 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <Shield size={13} className="text-indigo-600" />
               </div>
               <div>
-                <p className="text-[10px] text-slate-400 leading-none">Regular User</p>
-                <p className="text-sm font-black text-slate-800">{countUser}</p>
+                <p className="text-[10px] text-slate-400 leading-none">Admin Toko</p>
+                <p className="text-sm font-black text-slate-800">{countAdminToko}</p>
               </div>
             </div>
           </div>
 
-          {/* Search Input */}
+          {/* Search */}
           <div className="relative flex-1">
             <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -197,7 +205,7 @@ const UserIndex: React.FC = () => {
           </div>
         </div>
 
-        {/* ── Tabel Data Pengguna ── */}
+        {/* ── Tabel ── */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-20 gap-3 text-slate-400">
@@ -208,56 +216,37 @@ const UserIndex: React.FC = () => {
             <EmptyState onAdd={() => setShowCreate(true)} filtered={search.length > 0} />
           ) : (
             <>
-              {/* Desktop View Table */}
+              {/* Desktop Table */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-100 bg-slate-50/70">
-                      <th className="text-left py-3.5 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider w-16">
-                        #
-                      </th>
-                      <th className="text-left py-3.5 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                        Nama Lengkap
-                      </th>
-                      <th className="text-left py-3.5 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                        Username / NIM
-                      </th>
-                      <th className="text-left py-3.5 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                        Hak Akses (Role)
-                      </th>
-                      <th className="text-center py-3.5 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider w-40">
-                        Aksi
-                      </th>
+                      <th className="text-left py-3.5 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider w-16">#</th>
+                      <th className="text-left py-3.5 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Nama Lengkap</th>
+                      <th className="text-left py-3.5 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Username / NIM</th>
+                      <th className="text-left py-3.5 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Hak Akses (Role)</th>
+                      <th className="text-center py-3.5 px-5 text-xs font-bold text-slate-400 uppercase tracking-wider w-40">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
                     {filtered.map((user, idx) => (
-                      <tr key={user.id} className="hover:bg-slate-50/60 transition-colors group">
-                        {/* Nomor Urut */}
+                      <tr key={user.id} className="hover:bg-slate-50/60 transition-colors">
                         <td className="py-4 px-5">
                           <span className="w-7 h-7 bg-slate-100 rounded-lg flex items-center justify-center text-xs font-black text-slate-500">
                             {idx + 1}
                           </span>
                         </td>
-
-                        {/* Nama Lengkap */}
                         <td className="py-4 px-5">
                           <span className="font-semibold text-slate-800">{user.name}</span>
                         </td>
-
-                        {/* Username / NIM */}
                         <td className="py-4 px-5">
                           <span className="font-mono text-xs text-slate-600 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
                             {user.username}
                           </span>
                         </td>
-
-                        {/* Hak Akses */}
                         <td className="py-4 px-5">
                           <RoleBadge roleName={user.role?.name || 'No Role'} />
                         </td>
-
-                        {/* Aksi */}
                         <td className="py-4 px-5">
                           <div className="flex items-center justify-center gap-2">
                             <button
@@ -292,7 +281,7 @@ const UserIndex: React.FC = () => {
                 </table>
               </div>
 
-              {/* Mobile View Cards */}
+              {/* Mobile Cards */}
               <div className="md:hidden divide-y divide-slate-100">
                 {filtered.map((user, idx) => (
                   <div key={user.id} className="p-4">
@@ -306,8 +295,6 @@ const UserIndex: React.FC = () => {
                           <p className="font-mono text-[11px] text-slate-500">{user.username}</p>
                         </div>
                       </div>
-                      
-                      {/* Tombol aksi Mobile */}
                       <div className="flex gap-1.5 flex-shrink-0">
                         <button
                           type="button"
@@ -343,7 +330,7 @@ const UserIndex: React.FC = () => {
                 ))}
               </div>
 
-              {/* Footer List Counter */}
+              {/* Footer counter */}
               <div className="border-t border-slate-100 px-5 py-3 flex items-center justify-between">
                 <p className="text-xs text-slate-400">
                   Menampilkan{' '}
@@ -364,7 +351,7 @@ const UserIndex: React.FC = () => {
         </div>
       </div>
 
-      {/* ── Modals Modul ── */}
+      {/* ── Modals ── */}
       {showCreate && (
         <UsersCreate
           onSuccess={handleSuccess}
